@@ -114,7 +114,7 @@ public interface LongLongIndex {
 	 */
 	long removeLong(long key, long value);
 
-	void print();
+	String print();
 
 	/**
 	 * Before updating the index, the method checks whether the entry already exists.

@@ -28,6 +28,7 @@ import org.zoodb.tools.ZooHelper;
  * @author ztilmann
  * @deprecated Currently not supported, please use JDO instead
  */
+@Deprecated
 public class ZooSession {
 
 	private final Session tx;

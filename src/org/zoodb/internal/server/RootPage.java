@@ -147,6 +147,7 @@ final class RootPage {
 	 * @return Index page.
 	 * @deprecated This should probably be removed. Are we going to use this at some point?
 	 */
+	@Deprecated
 	int getIndexPage() {
 		return indexPage;
 	}

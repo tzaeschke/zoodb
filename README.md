@@ -11,7 +11,7 @@ ZooDB
 
 
 ZooDB is an object oriented database based on the JDO 3.0 standard.
-It is written by Tilmann Zäschke since 2008, since 2011 with friendly support by the GlobIS Group at ETH Zurich.
+It is written by Tilmann Zäschke since 2008, between 2011 and 2015 with friendly support by the GlobIS Group at ETH Zurich.
 ZooDB is currently licensed under APL 2.0 (Apache License, Version 2.0), see file COPYING.
 
 ZooDB is also available via maven:

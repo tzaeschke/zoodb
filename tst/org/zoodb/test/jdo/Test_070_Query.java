@@ -570,7 +570,7 @@ public class Test_070_Query {
         r = (List<TestClass>) q.execute();
         assertEquals(1, r.size());
         for (TestClass tc: r) {
-            assertTrue("int="+tc.getInt(), tc.getInt() == 123);
+            assertEquals("int=" + tc.getInt(), 123, tc.getInt());
         }
 
         TestTools.closePM(pm);
@@ -612,7 +612,7 @@ public class Test_070_Query {
         r = (List<TestClass>) q.execute();
         n = 0;
         for (TestClass tc: r) {
-            assertTrue("int="+tc.getInt(), tc.getInt() == 123);
+            assertEquals("int=" + tc.getInt(), 123, tc.getInt());
             n++;
         }
         assertEquals(1, n);
@@ -621,7 +621,7 @@ public class Test_070_Query {
         r = (List<TestClass>) q.execute();
         n = 0;
         for (TestClass tc: r) {
-            assertTrue("int="+tc.getInt(), tc.getInt() == 123);
+            assertEquals("int=" + tc.getInt(), 123, tc.getInt());
             n++;
         }
         assertEquals(1, n);
@@ -630,7 +630,7 @@ public class Test_070_Query {
         r = (List<TestClass>) q.execute();
         n = 0;
         for (TestClass tc: r) {
-            assertTrue("int="+tc.getInt(), tc.getInt() == 123);
+            assertEquals("int=" + tc.getInt(), 123, tc.getInt());
             n++;
         }
         assertEquals(1, n);
@@ -639,7 +639,7 @@ public class Test_070_Query {
         r = (List<TestClass>) q.execute();
         n = 0;
         for (TestClass tc: r) {
-            assertTrue("int="+tc.getInt(), tc.getInt() == 123);
+            assertEquals("int=" + tc.getInt(), 123, tc.getInt());
             n++;
         }
         assertEquals(1, n);
@@ -807,6 +807,8 @@ public class Test_070_Query {
 	 * ZooDB also support a mode where accessing a query outside of a transaction 
 	 * always fails with a JDOUserException. This can be emulated with
 	 * 'alwaysFails' to 'false'.
+     *
+     * Also see outcome of https://issues.apache.org/jira/browse/JDO-735
 	 */
 	@SuppressWarnings("unchecked")
 	private <T> void testExtentOnClosedPM_Issue91(Class<T> cls,	String filter, 
@@ -847,8 +849,6 @@ public class Test_070_Query {
 	        	assertTrue(e.getMessage(), e.getMessage().contains("not active"));
 	        }
         } else {
-        	//TODO see outcome of https://issues.apache.org/jira/browse/JDO-735
-        	System.err.println("FIXME: Test_070_Query.testQueryOnClosedPM_Issue91();");
         	assertFalse(c3.iterator().hasNext());
         }
 
@@ -930,20 +930,12 @@ public class Test_070_Query {
         }
     	
         try {
-        	//TODO see outcome of https://issues.apache.org/jira/browse/JDO-735
-        	System.err.println("FIXME: Test_070_Query.testQueryOnClosedPM_Issue91();");
         	c3.iterator();
         	fail();
         } catch (JDOFatalUserException e) {
         	assertTrue(e.getMessage(), e.getMessage().contains("closed"));
         }
 
-    	//TODO !!!!
-    	//TODO !!!!
-    	//TODO !!!!
-
-        //TODO see outcome of https://issues.apache.org/jira/browse/JDO-735
-        System.err.println("FIXME: Test_070_Query.testQueryOnClosedPM_Issue91();");
         if (alwaysFail) {
         	try {
               	i3.hasNext();
@@ -958,8 +950,6 @@ public class Test_070_Query {
       	
         if (alwaysFail) {
         	try {
-        		//TODO see outcome of https://issues.apache.org/jira/browse/JDO-735
-        		System.err.println("FIXME: Test_070_Query.testQueryOnClosedPM_Issue91();");
         		i3.next();
         		fail();
         	} catch (JDOUserException e) {
@@ -967,8 +957,6 @@ public class Test_070_Query {
         	}
         } else {
         	try {
-        		//TODO see outcome of https://issues.apache.org/jira/browse/JDO-735
-        		System.err.println("FIXME: Test_070_Query.testQueryOnClosedPM_Issue91();");
         		i3.next();
         		fail();
         	} catch (NoSuchElementException e) {

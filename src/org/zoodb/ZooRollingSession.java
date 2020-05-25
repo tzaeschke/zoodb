@@ -31,6 +31,7 @@ import org.zoodb.tools.ZooHelper;
  * @author ztilmann
  * @deprecated Currently not supported, please use JDO instead
  */
+@Deprecated
 public class ZooRollingSession {
 
 	//TODO: The concurrency aspect could be improved by internally starting the session when the 

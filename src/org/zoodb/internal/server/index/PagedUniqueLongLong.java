@@ -137,8 +137,8 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 	}
 	
 	@Override
-	public void print() {
-		root.print("");
+	public String print() {
+		return root.print("");
 	}
 
 	@Override

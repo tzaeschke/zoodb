@@ -269,7 +269,7 @@ public class Test_071_QueryExamples {
 		Query q = pm.newQuery (Department.class, filter);
 		q.declareParameters ("float sal");
 		q.declareVariables (Employee.class.getName() + " emp");
-		Collection<?> deps = (Collection<?>) q.execute (new Float (30000.));
+		Collection<?> deps = (Collection<?>) q.execute (Float.valueOf(30000.f));
 		assertTrue(!deps.isEmpty());
 		assertEquals(1, deps.size());
 //			<query name="multivalue">
@@ -592,7 +592,7 @@ public class Test_071_QueryExamples {
 		Query q = pm.newQuery (Employee.class, "salary > sal");
 		q.declareParameters ("Float sal");
 		q.setResultClass(EmpWrapper.class);
-		Collection<EmpWrapper> infos = (Collection<EmpWrapper>) q.execute (new Float (30000.));
+		Collection<EmpWrapper> infos = (Collection<EmpWrapper>) q.execute (Float.valueOf(30000.f));
 		Iterator<EmpWrapper> it = infos.iterator();
 		while (it.hasNext()) {
 			EmpWrapper info = it.next();
@@ -632,7 +632,7 @@ public class Test_071_QueryExamples {
 		Query q = pm.newQuery (Employee.class, "salary > sal");
 		q.declareParameters ("Float sal");
 		q.setResultClass(EmpInfo.class);
-		Collection<EmpInfo> infos = (Collection<EmpInfo>) q.execute (new Float (30000.));
+		Collection<EmpInfo> infos = (Collection<EmpInfo>) q.execute (Float.valueOf(30000.f));
 		Iterator<EmpInfo> it = infos.iterator();
 		while (it.hasNext()) {
 			EmpInfo info = it.next();
@@ -834,7 +834,7 @@ public class Test_071_QueryExamples {
 
 		Query q = pm.newQuery (Employee.class, "salary > sal");
 		q.declareParameters ("Float sal");
-		long del = q.deletePersistentAll(new Float(30000.));
+		long del = q.deletePersistentAll(Float.valueOf(30000.f));
 		assertEquals(5, del);
 		
 		pm.currentTransaction().commit();
@@ -843,7 +843,7 @@ public class Test_071_QueryExamples {
 		// check deletion!
 		q = pm.newQuery (Employee.class, "salary > sal");
 		q.declareParameters ("Float sal");
-		Collection<Employee> c = (Collection<Employee>) q.execute(new Float(30000.));
+		Collection<Employee> c = (Collection<Employee>) q.execute(Float.valueOf(30000.f));
 		assertEquals(0, c.size());
 
 		pm.currentTransaction().rollback();

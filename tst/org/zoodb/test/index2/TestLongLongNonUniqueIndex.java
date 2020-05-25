@@ -375,8 +375,7 @@ public class TestLongLongNonUniqueIndex {
             for (int j = 1000; j <= i; j++) {
                 Iterator<LongLongIndex.LLEntry> fp2 = ind.iterator(j, j);
                 if (!fp2.hasNext()) {
-                    ind.print();
-                    fail();
+                    fail(ind.print());
                 }
             }
         }
@@ -915,7 +914,7 @@ public class TestLongLongNonUniqueIndex {
         final int MAX = 30000;
         LongLongIndex ind = createIndex();
 
-        ind.print();
+        assertEquals("", ind.print());
         
         //check element count
         CloseableIterator<LongLongIndex.LLEntry> it = ind.iterator(1, Long.MAX_VALUE);
@@ -932,7 +931,7 @@ public class TestLongLongNonUniqueIndex {
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.removeLong(i, i);
         }
-        ind.print();
+        assertTrue(ind.print().length() > 100);
         it = ind.iterator(1, Long.MAX_VALUE);
         assertFalse(it.hasNext());
         it2 = ind.descendingIterator();

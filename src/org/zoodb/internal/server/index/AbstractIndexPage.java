@@ -283,7 +283,7 @@ abstract class AbstractIndexPage {
 
 	abstract void readData(StorageChannelInput in);
 
-	public abstract void print(String indent);
+	public abstract String print(String indent);
 	
 	abstract AbstractIndexPage getParent();
 
@@ -411,7 +411,7 @@ abstract class AbstractIndexPage {
 				indexPage.pageId + "   " + Arrays.toString(subPageIds));
 	}
 
-	public abstract void printLocal();
+	public abstract String printLocal();
 	
 	protected void assignThisAsRootToLeaves() {
 		for (int i = 0; i <= getNKeys(); i++) {

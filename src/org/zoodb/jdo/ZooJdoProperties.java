@@ -204,7 +204,7 @@ public class ZooJdoProperties extends Properties implements Constants {
 	/**
 	 * Property that defines how access to closed Queries and Extent should be handled. 
 	 * Queries and Extents are automatically closed at transaction boundaries.
-	 * y default, as specified in JDO 3.1, closed queries and extents behave as if they were
+	 * By default, as specified in JDO 3.1, closed queries and extents behave as if they were
 	 * empty.
 	 * 
 	 * ZooDB allows to change this behavior such that access to closed Queries and Extents

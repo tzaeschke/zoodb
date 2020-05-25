@@ -22,6 +22,7 @@ import org.zoodb.internal.server.StorageChannelInput;
 import org.zoodb.internal.server.StorageChannelOutput;
 import org.zoodb.internal.server.index.LongLongIndex.LLEntryIterator;
 import org.zoodb.internal.util.DBLogger;
+import org.zoodb.internal.util.FormattedStringBuilder;
 
 class LLIndexPage extends AbstractIndexPage {
 	private LLIndexPage parent;
@@ -604,51 +605,54 @@ class LLIndexPage extends AbstractIndexPage {
 	}
 	
 	@Override
-	public void print(String indent) {
-//		System.out.println("Java page ID: " + this);  //TODO
+	public String print(String indent) {
+	    FormattedStringBuilder sb = new FormattedStringBuilder();
 		if (isLeaf) {
-			System.out.println(indent + "Leaf page(id=" + pageId() + "): nK=" + nEntries + " keys=" + 
+			sb.appendln(indent + "Leaf page(id=" + pageId() + "): nK=" + nEntries + " keys=" + 
 					Arrays.toString(keys));
-			System.out.println(indent + "                         " + Arrays.toString(values));
+			sb.appendln(indent + "                         " + Arrays.toString(values));
 		} else {
-			System.out.println(indent + "Inner page(id=" + pageId() + "): nK=" + nEntries + " keys=" + 
+		    sb.appendln(indent + "Inner page(id=" + pageId() + "): nK=" + nEntries + " keys=" + 
 					Arrays.toString(keys));
-			System.out.println(indent + "                " + nEntries + " page=" + 
+		    sb.appendln(indent + "                " + nEntries + " page=" + 
 					Arrays.toString(subPageIds));
 			if (!ind.isUnique()) {
-				System.out.println(indent + "              " + nEntries + " values=" + 
+			    sb.appendln(indent + "              " + nEntries + " values=" + 
 						Arrays.toString(values));
 			}
 //			System.out.println(indent + "                " + nEntries + " leaf=" + 
 //					Arrays.toString(leaves));
-			System.out.print(indent + "[");
+			sb.append(indent + "[");
 			for (int i = 0; i <= nEntries; i++) {
 				if (subPages[i] != null) { 
-					System.out.print(indent + "i=" + i + ": ");
-					subPages[i].print(indent + "  ");
+				    sb.append(indent + "i=" + i + ": ");
+				    sb.append(subPages[i].print(indent + "  "));
 				}
-				else System.out.println("Page not loaded: " + subPageIds[i]);
+				else sb.appendln("Page not loaded: " + subPageIds[i]);
 			}
-			System.out.println(']');
+			sb.appendln("]");
 		}
+		return sb.toString();
 	}
 
 	@Override
-	public void printLocal() {
-		System.out.println("PrintLocal() for " + this);
+	public String printLocal() {
+        FormattedStringBuilder sb = new FormattedStringBuilder();
+		sb.appendln("PrintLocal() for " + this);
 		if (isLeaf) {
-			System.out.println("Leaf page(id=" + pageId() + "): nK=" + nEntries + " oids=" + 
+		    sb.appendln("Leaf page(id=" + pageId() + "): nK=" + nEntries + " oids=" + 
 					Arrays.toString(keys));
-			System.out.println("                         " + Arrays.toString(values));
+		    sb.appendln("                         " + Arrays.toString(values));
 		} else {
-			System.out.println("Inner page(id=" + pageId() + "): nK=" + nEntries + " oids=" + 
+		    sb.appendln("Inner page(id=" + pageId() + "): nK=" + nEntries + " oids=" + 
 					Arrays.toString(keys));
-			System.out.println("                      " + Arrays.toString(subPageIds));
+		    sb.appendln("                      " + Arrays.toString(subPageIds));
 			if (!ind.isUnique()) {
-				System.out.println("                      " + Arrays.toString(values));
+			    sb.appendln("                      " + Arrays.toString(values));
 			}
-			System.out.println("                      " + Arrays.toString(subPages));
+			sb.appendln("                      " + Arrays.toString(subPages));
 		}
+		return sb.toString();
 	}
 
 	@Override
@@ -774,10 +778,6 @@ class LLIndexPage extends AbstractIndexPage {
 				return;
 			}
 		}
-//		System.out.println("this:" + parent);
-//		this.printLocal();
-//		System.out.println("leaf: " + indexPage);
-//		indexPage.printLocal();
 		throw DBLogger.newFatalInternal("leaf page not found.");
 	}
 
@@ -836,10 +836,6 @@ class LLIndexPage extends AbstractIndexPage {
 				return;
 			}
 		}
-//		System.out.println("this:" + parent);
-//		this.printLocal();
-//		System.out.println("sub-page:");
-//		indexPage.printLocal();
 		throw DBLogger.newFatalInternal("Sub-page not found.");
 	}
 

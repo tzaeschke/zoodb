@@ -318,8 +318,7 @@ public class TestLongLongUniqueIndex {
             for (int j = 1000; j <= i; j++) {
                 LongLongIndex.LLEntry e = ind.findValue(j);
                 if (e == null) {
-                    ind.print();
-                    fail();
+                    fail(ind.print());
                 }
             }
         }

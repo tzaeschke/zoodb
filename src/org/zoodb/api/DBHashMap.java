@@ -120,7 +120,7 @@ public class DBHashMap<K, V> extends ZooPC implements Map<K, V>, DBCollection {
 	}
 
 	public void resize(int size) {
-		System.out.println("STUB: DBHashtable.resize()");
+		// TODO
 	}
 	
 	@Override

@@ -358,7 +358,7 @@ public class Test_127_QueryBoolFunctions {
 		t2.init();
 		t2.setString("1111");
 		t2.addInt(123);
-		t2.addObj(new Integer(1234));
+		t2.addObj(Integer.valueOf(1234));
 		t2.addTC(t1);
 		t2.addToMap("key", t1);
 		t2.addToSet("123");

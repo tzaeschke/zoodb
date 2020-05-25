@@ -232,8 +232,8 @@ public class PagedOidIndex {
 		return new OidIterator(idx, 0, Long.MAX_VALUE);
 	}
 
-	public void print() {
-		idx.print();
+	public String print() {
+		return idx.print();
 	}
 
 	public long getMaxValue() {

@@ -178,7 +178,7 @@ public class DBArrayList<E> extends ZooPC implements List<E>, DBCollection {
 	}
 
 	public void resize(int size) {
-		System.out.println("STUB: DBVector.resize()");
+		// TODO
 	}
 	
 	private class DBIterator implements Iterator<E> {
