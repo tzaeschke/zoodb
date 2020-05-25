@@ -43,7 +43,8 @@ import org.zoodb.jdo.spi.StateManagerImpl;
  */
 public abstract class ZooPC implements Serializable {
 
-	private static final byte PS_PERSISTENT = 1;
+    private static final long serialVersionUID = 1L;
+    private static final byte PS_PERSISTENT = 1;
 	private static final byte PS_TRANSACTIONAL = 2;
 	private static final byte PS_DIRTY = 4;
 	private static final byte PS_NEW = 8;
