@@ -79,7 +79,9 @@ public class QueryOptimizerV3 {
 		List<QueryAdvice> advices = new LinkedList<>();
 		List<ZooFieldDef> availableIndices = new LinkedList<>();
 		for (ZooFieldDef f: clsDef.getAllFields()) {
-			if (f.isIndexed()) {
+			// We exclude dirty schemata here. They may be new or at least the index may be new, see issue #131.
+			// TODO This is not ideal, we could allow using indexes if the relevant field+index hasn't changed.
+			if (f.isIndexed() && !clsDef.jdoZooIsDirty()) {
 				availableIndices.add(f);
 			}
 		}

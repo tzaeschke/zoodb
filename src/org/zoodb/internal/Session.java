@@ -452,7 +452,10 @@ public class Session implements IteratorRegistry {
 		checkActiveRead();
 		MergingIterator<ZooPC> iter = 
 				new MergingIterator<ZooPC>(this, config.getFailOnClosedQueries());
-		loadAllInstances(def.getVersionProxy(), subClasses, iter, loadFromCache);
+		if (!def.jdoZooIsNew()) {
+			// do not submit query for newly created schema
+			loadAllInstances(def.getVersionProxy(), subClasses, iter, loadFromCache);
+		}
 		if (loadFromCache) {
 			//also add 'new' instances
 			iter.add(cache.iterator(def, subClasses, ObjectState.PERSISTENT_NEW));
