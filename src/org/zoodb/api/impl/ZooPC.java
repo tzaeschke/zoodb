@@ -35,7 +35,7 @@ import org.zoodb.jdo.spi.StateManagerImpl;
 
 /**
  * This is the common super class of all persistent classes.
- * It is separate from PersistenceCapabaleImpl to allow easier separation
+ * It is separate from PersistenceCapableImpl to allow easier separation
  * from JDO. For example, PersistenceCapableImpl implements the
  * PersistenceCapable interface.
  * 
