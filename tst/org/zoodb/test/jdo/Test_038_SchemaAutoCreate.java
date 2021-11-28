@@ -17,6 +17,7 @@ package org.zoodb.test.jdo;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 
 import javax.jdo.Extent;
@@ -677,7 +678,7 @@ public class Test_038_SchemaAutoCreate {
         pm.currentTransaction().begin();
 
         Query q0 = pm.newQuery(TestClassTiny.class);
-        Collection c0 = (Collection) q0.execute();
+        Collection<?> c0 = (Collection<?>) q0.execute();
         assertEquals(0, c0.size());
 
         TestClassTiny t = new TestClassTiny();
@@ -685,7 +686,7 @@ public class Test_038_SchemaAutoCreate {
         pm.makePersistent(t);
 
         Query q1 = pm.newQuery(TestClassTiny.class);
-        Collection c1 = (Collection) q1.execute();
+        Collection<?> c1 = (Collection<?>) q1.execute();
         assertEquals(1, c1.size());
 
         pm.currentTransaction().commit();
@@ -698,7 +699,7 @@ public class Test_038_SchemaAutoCreate {
         pm.currentTransaction().begin();
 
         Query q0 = pm.newQuery(TestClassTiny.class, "_int == 42");
-        Collection c0 = (Collection) q0.execute();
+        Collection<?> c0 = (Collection<?>) q0.execute();
         assertEquals(0, c0.size());
 
         TestClassTiny t = new TestClassTiny();
@@ -706,7 +707,7 @@ public class Test_038_SchemaAutoCreate {
         pm.makePersistent(t);
 
         Query q1 = pm.newQuery(TestClassTiny.class, "_int == 42");
-        Collection c1 = (Collection) q1.execute();
+        Collection<?> c1 = (Collection<?>) q1.execute();
         assertEquals(1, c1.size());
 
         pm.currentTransaction().commit();
@@ -719,7 +720,7 @@ public class Test_038_SchemaAutoCreate {
         pm.currentTransaction().begin();
 
         Query q0 = pm.newQuery(TestClassTiny.class, "_int == 42");
-        Collection c0 = (Collection) q0.execute();
+        Collection<?> c0 = (Collection<?>) q0.execute();
         assertEquals(0, c0.size());
 
         TestClassTiny t = new TestClassTiny();
@@ -730,8 +731,34 @@ public class Test_038_SchemaAutoCreate {
         schema.createIndex("_int", true);
 
         Query q1 = pm.newQuery(TestClassTiny.class, "_int == 42");
-        Collection c1 = (Collection) q1.execute();
+        Collection<?> c1 = (Collection<?>) q1.execute();
         assertEquals(1, c1.size());
+
+        pm.currentTransaction().commit();
+        TestTools.closePM();
+    }
+
+    @Test
+    public void testSchemaAutoCreationBug_Issue_131_QueryFailure_Extent() {
+        PersistenceManager pm = TestTools.openPM(props);
+        pm.currentTransaction().begin();
+
+        Extent<TestClassTiny> e0 = pm.getExtent(TestClassTiny.class);
+        Iterator<TestClassTiny> i0 = e0.iterator();
+        assertFalse(i0.hasNext());
+
+        TestClassTiny t = new TestClassTiny();
+        t.setInt(42);
+        pm.makePersistent(t);
+
+        ZooClass schema = ZooJdoHelper.schema(pm).getClass(TestClassTiny.class);
+        schema.createIndex("_int", true);
+
+        Extent<TestClassTiny> e1 = pm.getExtent(TestClassTiny.class);
+        Iterator<TestClassTiny> i1 = e1.iterator();
+        assertTrue(i1.hasNext());
+        i1.next();
+        assertFalse(i1.hasNext());
 
         pm.currentTransaction().commit();
         TestTools.closePM();
