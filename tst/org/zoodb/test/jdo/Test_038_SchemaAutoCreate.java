@@ -15,12 +15,6 @@
  */
 package org.zoodb.test.jdo;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -42,6 +36,8 @@ import org.zoodb.jdo.ZooJdoProperties;
 import org.zoodb.schema.ZooClass;
 import org.zoodb.schema.ZooSchema;
 import org.zoodb.test.testutil.TestTools;
+
+import static org.junit.Assert.*;
 
 public class Test_038_SchemaAutoCreate {
 
@@ -664,6 +660,82 @@ public class Test_038_SchemaAutoCreate {
         
         TestTools.closePM();
    }
+
+    /**
+     * Issue #131
+     *
+     * Requires
+     * 1. Empty DB
+     * 2. Open TX with schema auto creation enabled
+     * 3. Query for class "MyClass" -> As expected: empty result.
+     * 4. Create instance of "MyCLass" and call makePersistent() on it.
+     * 5. Query for class "MyClass" -> Unexpected: Error about missing class schema
+     */
+    @Test
+    public void testSchemaAutoCreationBug_Issue_131_QueryFailure() {
+        PersistenceManager pm = TestTools.openPM(props);
+        pm.currentTransaction().begin();
+
+        Query q0 = pm.newQuery(TestClassTiny.class);
+        Collection c0 = (Collection) q0.execute();
+        assertEquals(0, c0.size());
+
+        TestClassTiny t = new TestClassTiny();
+        t.setInt(42);
+        pm.makePersistent(t);
+
+        Query q1 = pm.newQuery(TestClassTiny.class);
+        Collection c1 = (Collection) q1.execute();
+        assertEquals(1, c1.size());
+
+        pm.currentTransaction().commit();
+        TestTools.closePM();
+    }
+
+    @Test
+    public void testSchemaAutoCreationBug_Issue_131_QueryFailure_WithFilter() {
+        PersistenceManager pm = TestTools.openPM(props);
+        pm.currentTransaction().begin();
+
+        Query q0 = pm.newQuery(TestClassTiny.class, "_int == 42");
+        Collection c0 = (Collection) q0.execute();
+        assertEquals(0, c0.size());
+
+        TestClassTiny t = new TestClassTiny();
+        t.setInt(42);
+        pm.makePersistent(t);
+
+        Query q1 = pm.newQuery(TestClassTiny.class, "_int == 42");
+        Collection c1 = (Collection) q1.execute();
+        assertEquals(1, c1.size());
+
+        pm.currentTransaction().commit();
+        TestTools.closePM();
+    }
+
+    @Test
+    public void testSchemaAutoCreationBug_Issue_131_QueryFailure_WithIndex() {
+        PersistenceManager pm = TestTools.openPM(props);
+        pm.currentTransaction().begin();
+
+        Query q0 = pm.newQuery(TestClassTiny.class, "_int == 42");
+        Collection c0 = (Collection) q0.execute();
+        assertEquals(0, c0.size());
+
+        TestClassTiny t = new TestClassTiny();
+        t.setInt(42);
+        pm.makePersistent(t);
+
+        ZooClass schema = ZooJdoHelper.schema(pm).getClass(TestClassTiny.class);
+        schema.createIndex("_int", true);
+
+        Query q1 = pm.newQuery(TestClassTiny.class, "_int == 42");
+        Collection c1 = (Collection) q1.execute();
+        assertEquals(1, c1.size());
+
+        pm.currentTransaction().commit();
+        TestTools.closePM();
+    }
 
 }
 

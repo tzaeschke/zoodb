@@ -672,7 +672,7 @@ public class QueryImpl implements Query {
 	public void setClass(Class cls) {
 		checkUnmodifiable();
     	if (!ZooPC.class.isAssignableFrom(cls)) {
-    		throw DBLogger.newUser("Class is not persistence capabale: " + cls.getName());
+    		throw DBLogger.newUser("Class is not persistence capable: " + cls.getName());
     	}
 		candCls = cls;
 		Node node = pm.getSession().getPrimaryNode();

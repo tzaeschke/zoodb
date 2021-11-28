@@ -56,7 +56,7 @@ public class ClassExtent<T> implements Iterable<T> {
         pm.checkActiveRead();
         this.className = pcClass.getName();
     	if (!ZooPC.class.isAssignableFrom(pcClass)) {
-    		throw DBLogger.newUser("Class is not persistence capabale: " + 
+    		throw DBLogger.newUser("Class is not persistence capable: " +
     				pcClass.getName());
     	}
     	ZooClassDef def = pm.internalGetCache().getSchema(pcClass.getName());
