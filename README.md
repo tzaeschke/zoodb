@@ -20,7 +20,7 @@ ZooDB is also available via maven:
 <dependency>
     <groupId>org.zoodb</groupId>
     <artifactId>zoodb</artifactId>
-    <version>0.6.0</version>
+    <version>0.6.1</version>
 </dependency>
 ```
 
@@ -31,6 +31,9 @@ There are two ZooDB plug-in projects:
 
 News
 ====
+
+2020-12-05 - Release of ZooDB 0.6.1:
+ * Fixed issue #131: Query on auto-created (and uncommitted) schema causes exception.
 
 2020-05-03 - Release of ZooDB 0.6.0:
  * **License changed to Apache License, Version 2.0**
