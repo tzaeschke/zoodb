@@ -40,11 +40,11 @@
 
 	<distributionManagement>
 		<snapshotRepository>
-			<id>ossrh-snapshots</id>
+			<id>ossrh</id>
 			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
 		</snapshotRepository>
 		<repository>
-			<id>ossrh-releases</id>
+			<id>ossrh</id>
 			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
 		</repository>
 	</distributionManagement>
@@ -229,18 +229,12 @@
 	      	<plugin>
 	        	<artifactId>maven-release-plugin</artifactId>
 	        	<version>2.5.3</version>
-	        	<dependencies>
-	          		<dependency>
-	            		<groupId>org.apache.maven.scm</groupId>
-	            		<artifactId>maven-scm-api</artifactId>
-	            		<version>1.9.4</version>
-	          		</dependency>
-	          		<dependency>
-						<groupId>org.apache.maven.scm</groupId>
-	            		<artifactId>maven-scm-provider-gitexe</artifactId>
-	            		<version>1.9.4</version>
-	          		</dependency>
-	        	</dependencies>
+				<configuration>
+					<autoVersionSubmodules>true</autoVersionSubmodules>
+					<useReleaseProfile>false</useReleaseProfile>
+					<releaseProfiles>release</releaseProfiles>
+					<goals>deploy</goals>
+				</configuration>
 			</plugin>
    			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
