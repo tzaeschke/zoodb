@@ -89,8 +89,7 @@ public class RmiTaskRunner {
 		// start test process
 		System.out.println("Manager: starting task.");
 		System.setSecurityManager (new NoSecurityManager());
-		Process p = TestProcessLauncher.launchProcess("-XX:+UseConcMarkSweepGC", 
-				RmiTestProcess.class, new String[]{});
+		Process p = TestProcessLauncher.launchProcess("", RmiTestProcess.class, new String[]{});
 
 		RmiTestProcessI comp = null;
 		for (int i = 0; i < 10; i++) {
