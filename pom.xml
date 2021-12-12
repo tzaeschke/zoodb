@@ -3,7 +3,7 @@
 	<groupId>org.zoodb</groupId>
 	<artifactId>zoodb</artifactId>
 	<packaging>jar</packaging>
-	<version>0.6.1</version>
+	<version>0.6.2-SNAPSHOT</version>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -24,7 +24,7 @@
 		<url>https://github.com/tzaeschke/zoodb</url>
 		<connection>scm:git:git@github.com:tzaeschke/zoodb.git</connection>
 		<developerConnection>scm:git:git@github.com:tzaeschke/zoodb.git</developerConnection>
-    	<tag>zoodb-0.6.1</tag>
+    	<tag>HEAD</tag>
   	</scm>
 	<developers>
 		<developer>
