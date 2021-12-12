@@ -113,7 +113,7 @@
       		<plugin>
             	<groupId>org.codehaus.mojo</groupId>
             	<artifactId>build-helper-maven-plugin</artifactId>
-      			<version>3.1.0</version>
+      			<version>3.2.0</version>
             	<executions>
 	                <execution>
                     	<phase>generate-sources</phase>
@@ -128,10 +128,30 @@
                 	</execution>
             	</executions>
         	</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-enforcer-plugin</artifactId>
+				<version>1.4.1</version>
+				<executions>
+					<execution>
+						<id>enforce-maven</id>
+						<goals>
+							<goal>enforce</goal>
+						</goals>
+						<configuration>
+							<rules>
+								<requireMavenVersion>
+									<version>3.8.3</version>
+								</requireMavenVersion>
+							</rules>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
          	<plugin>
       			<groupId>org.apache.maven.plugins</groupId>
       			<artifactId>maven-source-plugin</artifactId>
-      			<version>3.2.0</version>
+      			<version>3.2.1</version>
       			<executions>
 	        		<execution>
           			<id>attach-sources</id>
@@ -144,7 +164,7 @@
     		<plugin>
       			<groupId>org.apache.maven.plugins</groupId>
       			<artifactId>maven-javadoc-plugin</artifactId>
-      			<version>3.2.0</version>
+      			<version>3.3.1</version>
       			<executions>
         			<execution>
 	          			<id>attach-javadocs</id>
@@ -246,7 +266,7 @@
 			<plugin>
   				<groupId>org.jacoco</groupId>
   				<artifactId>jacoco-maven-plugin</artifactId>
-  				<version>0.8.5</version>
+  				<version>0.8.7</version>
   				<executions>
     				<execution>
       					<goals>

@@ -10,6 +10,7 @@ RELEASE 0.6.1
 - T. Zaeschke
   - Updated dependencies for slf4j and junit
   - Removed "UseConcMarkSweepGC" option from tests for compatibility with newer Java releases
+  - Added maven-enforcer-plugin
 
 2021-Nov-27
 ===========
