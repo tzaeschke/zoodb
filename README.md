@@ -34,6 +34,9 @@ News
 
 2020-12-05 - Release of ZooDB 0.6.1:
  * Fixed issue #131: Query on auto-created (and uncommitted) schema causes exception.
+ * Updated dependencies for slf4j and junit
+ * Improved ZooCheckDb tool to print out schema and index information
+ * Fixed issue when executing a single parametrized query instance concurrently.
 
 2020-05-03 - Release of ZooDB 0.6.0:
  * **License changed to Apache License, Version 2.0**

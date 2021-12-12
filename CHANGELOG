@@ -1,9 +1,14 @@
 CHANGELOG
 =========
 
-2020-Dec-05
+2020-Dec-12
 ===========
 RELEASE 0.6.1
+
+2020-Dec-12
+===========
+- T. Zaeschke
+  - Updated dependencies for slf4j and junit
 
 2021-Nov-27
 ===========
@@ -18,7 +23,7 @@ RELEASE 0.6.1
 2020-May-09
 ===========
 - T. Zaeschke
-  - Fixed issue when executing a single parametrized query instence concurrently.
+  - Fixed issue when executing a single parametrized query instance concurrently.
 
 2020-May-01
 ===========
