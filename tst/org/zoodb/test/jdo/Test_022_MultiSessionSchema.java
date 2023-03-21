@@ -39,6 +39,7 @@ import org.zoodb.jdo.ZooJdoHelper;
 import org.zoodb.jdo.ZooJdoProperties;
 import org.zoodb.schema.ZooClass;
 import org.zoodb.schema.ZooSchema;
+import org.zoodb.test.Apple;
 import org.zoodb.test.api.TestSuper;
 import org.zoodb.test.testutil.TestTools;
 
@@ -614,4 +615,33 @@ public class Test_022_MultiSessionSchema {
 		pmf.close();
 	}
 
+	@Test
+	public void testSchemaAutocreationHangs_Issue_138() {
+		ZooJdoProperties props = TestTools.getProps();
+		props.setMultiThreaded(true);
+		//props.setZooAutoCreateSchema(false);
+		PersistenceManagerFactory pmf = JDOHelper.getPersistenceManagerFactory(props);
+		PersistenceManager pmMain = pmf.getPersistenceManager();
+		pmMain.currentTransaction().begin();
+		//ZooJdoHelper.schema(pmMain).addClass(Apple.class);
+		pmMain.currentTransaction().commit();
+
+		PersistenceManager pmWorker = pmf.getPersistenceManager();
+
+		Runnable r = new Runnable() {
+			@Override
+			public void run() {
+				pmWorker.currentTransaction().begin();
+				pmWorker.makePersistent(new Apple());
+				pmWorker.currentTransaction().commit();
+				pmMain.currentTransaction().begin();
+				System.out.print("begin last commit in thread... "); // is reached
+				pmMain.currentTransaction().commit();
+				System.out.println("done!"); // problem: is not reached
+			}
+		};
+		Thread t = new Thread(r, "Some external thread");
+		t.start();
+
+	}
 }
