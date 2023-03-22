@@ -17,6 +17,7 @@ package org.zoodb.internal.server;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.HashSet;
 
 import org.zoodb.internal.server.index.FreeSpaceManager;
 import org.zoodb.internal.util.PrimLongSetZ;
@@ -25,7 +26,7 @@ import org.zoodb.tools.impl.DataStoreManagerInMemory;
 
 public class StorageRootInMemory implements StorageRoot {
 
-	private final ArrayList<IOResourceProvider> views = new ArrayList<>();
+	private final HashSet<IOResourceProvider> views = new HashSet<>();
 	private final StorageChannelImpl indexChannel;
 
 	private final FreeSpaceManager fsm;
@@ -94,14 +95,23 @@ public class StorageRootInMemory implements StorageRoot {
 	}
 
 	@Override
-	public void close(IOResourceProvider channel) {
-		if (!views.remove(channel) && channel != indexChannel) {
-			throw new IllegalStateException();
+	public boolean closeIfNoChannelsRemain() {
+		synchronized (views) {
+			if (views.isEmpty()) {
+				close();
+				return true;
+			}
 		}
-//		if (views.isEmpty()) {
-//			System.err.println("Don't forget to close the file!");
-//			//TODO close everything???
-//		}
+		return false;
+	}
+
+	@Override
+	public void close(IOResourceProvider channel) {
+		synchronized (views) {
+			if (!views.remove(channel) && channel != indexChannel) {
+				throw new IllegalStateException();
+			}
+		}
 	}
 
 	@Override
@@ -113,7 +123,9 @@ public class StorageRootInMemory implements StorageRoot {
 	@Override
 	public final IOResourceProvider createChannel() {
 		IOResourceProvider c = new StorageChannelImpl(this);
-		views.add(c);
+		synchronized (views) {
+			views.add(c);
+		}
 		return c;
 	}
 

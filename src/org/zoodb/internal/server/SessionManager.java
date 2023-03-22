@@ -150,11 +150,15 @@ class SessionManager {
 	
 	void close(IOResourceProvider channel) {
 		channel.close();
-		if (file.getDataChannelCount() == 0) {
+		if (file.closeIfNoChannelsRemain()) {
 			LOGGER.info("Closing DB file: {}", path);
-			file.close();
 			SessionFactory.removeSession(this);
 		}
+//		if (file.getDataChannelCount() == 0) {
+//			LOGGER.info("Closing DB file: {}", path);
+//			file.close();
+//			SessionFactory.removeSession(this);
+//		}
 	}
 
 	Path getPath() {
@@ -235,7 +239,7 @@ class SessionManager {
 		lock.writeLock(key);
 	}
 
-	void release(DiskAccess key) {
+	void releaseLock(DiskAccess key) {
 		lock.release(key);
 	}
 
