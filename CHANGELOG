@@ -1,6 +1,13 @@
 CHANGELOG
 =========
 
+2023-Mar-22
+===========
+- T. Zaeschke
+  - Fixed issue #136 : ZooDB hangs with concurrent sessions after schema update.
+  - Reenabled numerous tests releated to mutli-session schema update
+   
+
 2020-Dec-12
 ===========
 RELEASE 0.6.1
