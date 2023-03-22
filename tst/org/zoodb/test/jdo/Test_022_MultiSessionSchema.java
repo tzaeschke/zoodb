@@ -22,13 +22,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import javax.jdo.JDOFatalDataStoreException;
-import javax.jdo.JDOFatalUserException;
-import javax.jdo.JDOHelper;
-import javax.jdo.JDOOptimisticVerificationException;
-import javax.jdo.JDOUserException;
-import javax.jdo.PersistenceManager;
-import javax.jdo.PersistenceManagerFactory;
+import javax.jdo.*;
 
 import org.junit.After;
 import org.junit.Before;
@@ -613,7 +607,7 @@ public class Test_022_MultiSessionSchema {
 	}
 
 	@Test
-	public void testSchemaAutocreationHangs_Issue_138() {
+	public void testSchemaAutocreationHangs_Issue_138() throws InterruptedException {
 		ZooJdoProperties props = TestTools.getProps();
 		props.setMultiThreaded(true);
 		//props.setZooAutoCreateSchema(false);
@@ -633,13 +627,20 @@ public class Test_022_MultiSessionSchema {
 				pmWorker.makePersistent(new TestClass());
 				pmWorker.currentTransaction().commit();
 				pmMain.currentTransaction().begin();
-				System.out.print("begin last commit in thread... "); // is reached
-				pmMain.currentTransaction().commit();
-				System.out.println("done!"); // problem: is not reached
+				try {
+					pmMain.currentTransaction().commit();
+					fail();
+				} catch (JDOFatalException e) {
+					// TODO this should be a FatalUserException....?
+					// good!
+				}
 			}
 		};
 		Thread t = new Thread(r, "Some external thread");
 		t.start();
+		t.join();
 
+		pmWorker.close();
+		assertTrue(pmMain.isClosed());
 	}
 }
