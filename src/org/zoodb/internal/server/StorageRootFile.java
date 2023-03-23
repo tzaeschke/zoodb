@@ -22,7 +22,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
-import java.util.ArrayList;
+import java.util.HashSet;
 
 import org.zoodb.internal.server.index.FreeSpaceManager;
 import org.zoodb.internal.util.DBLogger;
@@ -39,7 +39,7 @@ import org.zoodb.tools.ZooDebug;
  */
 public final class StorageRootFile implements StorageRoot {
 
-	private final ArrayList<IOResourceProvider> views = new ArrayList<>();
+	private final HashSet<IOResourceProvider> views = new HashSet<>();
 	private final StorageChannelImpl indexChannel;
 
 	private final FreeSpaceManager fsm;
@@ -111,9 +111,22 @@ public final class StorageRootFile implements StorageRoot {
 	}
 
 	@Override
+	public boolean closeIfNoChannelsRemain() {
+		synchronized (views) {
+			if (views.isEmpty()) {
+				close();
+				return true;
+			}
+		}
+		return false;
+	}
+
+	@Override
 	public void close(IOResourceProvider channel) {
-		if (!views.remove(channel) && channel != indexChannel) {
-			throw new IllegalStateException();
+		synchronized (views) {
+			if (!views.remove(channel) && channel != indexChannel) {
+				throw new IllegalStateException();
+			}
 		}
 	}
 
@@ -130,7 +143,9 @@ public final class StorageRootFile implements StorageRoot {
 	@Override
 	public final IOResourceProvider createChannel() {
 		IOResourceProvider c = new StorageChannelImpl(this);
-		views.add(c);
+		synchronized (views) {
+			views.add(c);
+		}
 		return c;
 	}
 

@@ -150,11 +150,18 @@ class SessionManager {
 	
 	void close(IOResourceProvider channel) {
 		channel.close();
-		if (file.getDataChannelCount() == 0) {
+		// SessionManager removal is done indirectly via the SessionManagerFactory because it needs to happen
+		// inside the SMF's synchronized block.
+		if (SessionFactory.removeSessionIfUnused(this)) {
 			LOGGER.info("Closing DB file: {}", path);
-			file.close();
-			SessionFactory.removeSession(this);
 		}
+	}
+
+	/**
+	 * @return 'true' if the SM was closed.
+	 */
+	boolean closeIfUnused() {
+		return file.closeIfNoChannelsRemain();
 	}
 
 	Path getPath() {
@@ -235,7 +242,7 @@ class SessionManager {
 		lock.writeLock(key);
 	}
 
-	void release(DiskAccess key) {
+	void releaseLock(DiskAccess key) {
 		lock.release(key);
 	}
 

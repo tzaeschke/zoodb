@@ -49,6 +49,8 @@ public interface StorageRoot {
 
 	void close();
 
+	boolean closeIfNoChannelsRemain();
+
 	boolean debugIsPageIdInFreeList(int pageId);
 	
 }

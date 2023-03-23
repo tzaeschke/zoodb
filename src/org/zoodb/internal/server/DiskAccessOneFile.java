@@ -403,11 +403,15 @@ public class DiskAccessOneFile implements DiskAccess {
 	public void close() {
 		LOGGER.info("Closing DB session: {}", node.getDbPath());
 		try {
-			sm.writeLock(this);
+		//	if (!sm.isLocked()) {
+			// Normally we would need a WLOCK because we modify the internal structure here (the list of Views).
+			// However, the view list is synchronized, so we get away with using an RLOCK (or probably even w/o lock...?)
+				sm.readLock(this);
+		//	}
 			sm.close(file);
 		} finally {
 			LOGGER.info(LOCKING_MARKER, "DAOF.close() release lock");
-			sm.release(this);
+			sm.releaseLock(this);
 		}
 	}
 
@@ -478,7 +482,7 @@ public class DiskAccessOneFile implements DiskAccess {
 			return txr;
 		} finally {
 			LOGGER.info(LOCKING_MARKER, "DAOF.rollback() release lock");
-			sm.release(this);
+			sm.releaseLock(this);
 		}
 	}
 	
@@ -536,7 +540,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	public OptimisticTransactionResult beginCommit(ArrayList<TxObjInfo> updates) {
 		//change read-lock to write-lock
 		LOGGER.info(LOCKING_MARKER, "DAOF.beginCommit() WLOCK");
-		sm.release(this);
+		sm.releaseLock(this);
 		//sm.getLock().writeLock(this);
 		if (ALLOW_READ_CONCURRENCY) {
 			//TODO should be read-lock! We allow this only for the tests to pass...
@@ -571,7 +575,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		//we release the lock only if the commit succeeds. Otherwise we keep the lock until
 		//everything was rolled back.
 		LOGGER.info(LOCKING_MARKER, "DAOF.commit() lock release");
-		sm.release(this);
+		sm.releaseLock(this);
 	}
 
 	/**
