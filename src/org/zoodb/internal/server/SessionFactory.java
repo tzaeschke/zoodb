@@ -92,8 +92,11 @@ public class SessionFactory {
 		}
 	}
 	
-	static void removeSession(SessionManager sm) {
+	static boolean removeSessionIfUnused(SessionManager sm) {
 		synchronized (sessions) {
+			if (!sm.closeIfUnused()) {
+				return false;
+			}
 			//TODO this does not scale
 			if (!sessions.remove(sm)) {
 				throw DBLogger.newFatalInternal("Server session not found for: " + sm.getPath());
@@ -104,6 +107,7 @@ public class SessionFactory {
 			if (sessions.isEmpty()) {
 				FAIL_BECAUSE_OF_ACTIVE_NON_TX_READ = false;
 			}
+			return true;
 		}
 	}
 

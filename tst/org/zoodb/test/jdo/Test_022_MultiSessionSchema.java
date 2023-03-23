@@ -627,6 +627,9 @@ public class Test_022_MultiSessionSchema {
 		// Now main PM should fail/reset because of changed schema
 		pmMain.currentTransaction().begin();
 		try {
+			// This commit used to hang because the session required a serer-WLOCK for
+			// removing itself from the server registry. However, the WLOCK was blocked by
+			// an RLOCK from the other session.
 			pmMain.currentTransaction().commit();
 			fail();
 		} catch (JDOFatalException e) {

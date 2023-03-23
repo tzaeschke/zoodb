@@ -402,17 +402,6 @@ public class DiskAccessOneFile implements DiskAccess {
 	@Override
 	public void close() {
 		LOGGER.info("Closing DB session: {}", node.getDbPath());
-//		if (sm.isLocked()) {
-//			// This happens when we reset the session due to a schema change.
-//			sm.releaseLock(this);
-//		}
-//		try {
-//			sm.writeLock(this);
-//			sm.close(file);
-//		} finally {
-//			LOGGER.info(LOCKING_MARKER, "DAOF.close() release lock");
-//			sm.releaseLock(this);
-//		}
 		try {
 		//	if (!sm.isLocked()) {
 			// Normally we would need a WLOCK because we modify the internal structure here (the list of Views).
