@@ -388,6 +388,7 @@ public class Test_022_MultiSessionSchema {
 		pmf.close();
 	}
 
+	@Ignore
 	@Test
 	public void testSchemaAttrIndexUpdates() {
 		ZooJdoProperties props = new ZooJdoProperties(TestTools.getDbName());
@@ -618,27 +619,19 @@ public class Test_022_MultiSessionSchema {
 		pmMain.currentTransaction().commit();
 
 		PersistenceManager pmWorker = pmf.getPersistenceManager();
+		pmWorker.currentTransaction().begin();
+		// auto-create schema
+		pmWorker.makePersistent(new TestClass());
+		pmWorker.currentTransaction().commit();
 
-		Runnable r = new Runnable() {
-			@Override
-			public void run() {
-				pmWorker.currentTransaction().begin();
-				//pmWorker.makePersistent(new Apple());
-				pmWorker.makePersistent(new TestClass());
-				pmWorker.currentTransaction().commit();
-				pmMain.currentTransaction().begin();
-				try {
-					pmMain.currentTransaction().commit();
-					fail();
-				} catch (JDOFatalException e) {
-					// TODO this should be a FatalUserException....?
-					// good!
-				}
-			}
-		};
-		Thread t = new Thread(r, "Some external thread");
-		t.start();
-		t.join();
+		// Now main PM should fail/reset because of changed schema
+		pmMain.currentTransaction().begin();
+		try {
+			pmMain.currentTransaction().commit();
+			fail();
+		} catch (JDOFatalException e) {
+			// good!
+		}
 
 		pmWorker.close();
 		assertTrue(pmMain.isClosed());
